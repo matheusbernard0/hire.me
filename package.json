@@ -1,0 +1,46 @@
+{
+   "name": "hire.me",
+   "version": "1.0.0",
+   "description": "Um pequeno projeto para testar suas habilidades como programador.",
+   "main": "build/Server.js",
+   "scripts": {
+      "dev": "ts-node src/Server.ts",
+      "start": "npm run migrate && npm run build && node ./build/Server.js",
+      "build": "tsc -p .",
+      "migrate": "npx typeorm migration:run",
+      "test": "jest --no-cache"
+   },
+   "repository": {
+      "type": "git",
+      "url": "git+https://github.com/matheusbernard0/hire.me.git"
+   },
+   "keywords": [],
+   "author": "",
+   "license": "ISC",
+   "bugs": {
+      "url": "https://github.com/matheusbernard0/hire.me/issues"
+   },
+   "homepage": "https://github.com/matheusbernard0/hire.me#readme",
+   "dependencies": {
+      "@types/express": "^4.17.6",
+      "@types/node": "^13.13.2",
+      "@types/shortid": "0.0.29",
+      "dotenv": "^8.2.0",
+      "express": "^4.17.1",
+      "express-async-handler": "^1.1.4",
+      "mysql": "^2.14.1",
+      "reflect-metadata": "^0.1.10",
+      "shortid": "^2.2.15",
+      "ts-node": "^8.9.0",
+      "typeorm": "0.2.24",
+      "typescript": "^3.8.3"
+   },
+   "devDependencies": {
+      "@types/jest": "^25.2.1",
+      "@types/node": "^8.0.29",
+      "jest": "^25.5.4",
+      "ts-jest": "^25.4.0",
+      "ts-node": "3.3.0",
+      "typescript": "3.3.3333"
+   }
+}
