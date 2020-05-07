@@ -28,11 +28,9 @@ export class ShortenerController {
 
         if (typeof alias !== 'string') throw new ShortenerControllerError('alias must be informed', 400)
 
-        this
         const shortenedURL = await this.shortenerService.retrieve({
             alias: alias,
         });
-
 
         return res.status(200).json(shortenedURL);
     }

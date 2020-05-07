@@ -5,10 +5,10 @@
    "main": "build/Server.js",
    "scripts": {
       "dev": "ts-node src/Server.ts",
-      "start": "npm run migrate && npm run build && node ./build/Server.js",
+      "start": "npm run build && npm run migrate && node ./build/Server.js",
       "build": "tsc -p .",
       "migrate": "npx typeorm migration:run",
-      "test": "jest --no-cache"
+      "test": "jest"
    },
    "repository": {
       "type": "git",
@@ -39,6 +39,7 @@
       "@types/jest": "^25.2.1",
       "@types/node": "^8.0.29",
       "jest": "^25.5.4",
+      "jest-express": "^1.12.0",
       "ts-jest": "^25.4.0",
       "ts-node": "3.3.0",
       "typescript": "3.3.3333"
