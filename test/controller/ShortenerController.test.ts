@@ -4,20 +4,21 @@ import {ShortenerRepository} from "../../src/repository/ShortenerRepository";
 import {Request} from "jest-express/lib/request";
 import {Request as ExpressRequest, Response as ExpressResponse } from "express";
 import {Response} from "jest-express/lib/response";
-import exp from "constants";
 import {FindMostVisitedResponseInterface} from "../../src/interface/dto/FindMostVisitedResponseInterface";
+import logger from "../../src/log/ShortenerLogger";
 
 
 
 jest.mock("../../src/service/ShortenerService");
 jest.mock("../../src/repository/ShortenerRepository");
+jest.mock("../../src/log/ShortenerLogger");
 
 describe('ShortenerController', () => {
 
     describe('create', () => {
 
         it('caso url não seja do tipo \'string\', deve lançar uma exceção', async () => {
-                const shortenerController = new ShortenerController(new ShortenerService(new ShortenerRepository()));
+                const shortenerController = new ShortenerController(new ShortenerService(new ShortenerRepository(), logger));
 
                 const mockedRequest = new Request() as unknown as ExpressRequest;
                 const mockedResponse = new Response() as unknown as ExpressResponse;
@@ -29,7 +30,7 @@ describe('ShortenerController', () => {
             'o resultado de shortenerService.create e com status 201', async () => {
             // mocks
             const mockedRepository =  new ShortenerRepository();
-            const mockedService = new ShortenerService(mockedRepository);
+            const mockedService = new ShortenerService(mockedRepository, logger);
             const mockedRequest = new Request() as unknown as ExpressRequest;
             const mockedResponse = new Response() as unknown as ExpressResponse;
 
@@ -65,7 +66,7 @@ describe('ShortenerController', () => {
             'o resultado de shortenerService.create e com status 201', async () => {
             // mocks
             const mockedRepository =  new ShortenerRepository();
-            const mockedService = new ShortenerService(mockedRepository);
+            const mockedService = new ShortenerService(mockedRepository, logger);
             const mockedRequest = new Request() as unknown as ExpressRequest;
             const mockedResponse = new Response() as unknown as ExpressResponse;
 
@@ -101,7 +102,7 @@ describe('ShortenerController', () => {
     describe('retrieve', () => {
 
         it('caso alias não seja do tipo \'string\', deve lançar uma exceção', async () => {
-            const shortenerController = new ShortenerController(new ShortenerService(new ShortenerRepository()));
+            const shortenerController = new ShortenerController(new ShortenerService(new ShortenerRepository(), logger));
 
             const mockedRequest = new Request() as unknown as ExpressRequest;
             const mockedResponse = new Response() as unknown as ExpressResponse;
@@ -112,7 +113,7 @@ describe('ShortenerController', () => {
         it('caso alias tenha sido informado, deve retornar o resultado de shortenerService.retrieve', async () => {
             // mocks
             const mockedRepository =  new ShortenerRepository();
-            const mockedService = new ShortenerService(mockedRepository);
+            const mockedService = new ShortenerService(mockedRepository, logger);
             const mockedRequest = new Request() as unknown as ExpressRequest;
             const mockedResponse = new Response() as unknown as ExpressResponse;
 
@@ -144,7 +145,7 @@ describe('ShortenerController', () => {
         it('caso quantity não tenha sido setado corretamente, deve lançar uma exceção', async () => {
             // mocks
             const mockedRepository =  new ShortenerRepository();
-            const mockedService = new ShortenerService(mockedRepository);
+            const mockedService = new ShortenerService(mockedRepository, logger);
             const mockedRequest = new Request() as unknown as ExpressRequest;
             const mockedResponse = new Response() as unknown as ExpressResponse;
 
@@ -159,7 +160,7 @@ describe('ShortenerController', () => {
             'o resultado deo shortenerService.findMostVisiteds', async () => {
             // mocks
             const mockedRepository =  new ShortenerRepository();
-            const mockedService = new ShortenerService(mockedRepository);
+            const mockedService = new ShortenerService(mockedRepository, logger);
             const mockedRequest = new Request() as unknown as ExpressRequest;
             const mockedResponse = new Response() as unknown as ExpressResponse;
 
