@@ -1,0 +1,31 @@
+version: "3"
+services:
+  application:
+    build: .
+    container_name: hireme-app
+    command: bash -c "npm install && npm start"
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    working_dir: '/app'
+    links:
+      - db
+    networks:
+      - intra-network
+  db:
+    image: mysql:5.7
+    container_name: hiremedb
+    ports:
+    - 3306:3306
+    environment:
+      MYSQL_USER: hireme
+      MYSQL_PASSWORD: hireme
+      MYSQL_DATABASE: hireme
+      MYSQL_ROOT_PASSWORD: hireme
+    networks:
+      - intra-network
+networks:
+  intra-network:
+    driver: bridge
