@@ -8,7 +8,9 @@ export default function(err, req, res, next) {
 
     if(err instanceof ShortenerControllerError){
         return res.status(err.status)
-            .json(err.message);
+            .json({
+                message: err.message
+            });
     }
 
     if (err instanceof ShortenedNotExistsError){
