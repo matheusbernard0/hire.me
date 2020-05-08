@@ -1,7 +1,6 @@
 import {Request, Response} from 'express';
 import {ShortenerControllerError} from "../error/ShortenerControllerError";
 import {ShortenerServiceInterface} from "../interface/service/ShortenerServiceInterface";
-import logger from '../log/ShortenerLogger';
 
 export class ShortenerController {
 
