@@ -16,7 +16,7 @@ import { TimeUtil } from '../../src/util/TimeUtil';
 jest.mock('../../src/repository/ShortenerRepository');
 jest.mock('shortid');
 jest.mock('../../src/log/ShortenerLogger');
-jest.mock('../../');
+
 const mockedTimeUtil = jest.mock('../../src/util/TimeUtil');
 
 describe('ShortenerService', () => {
