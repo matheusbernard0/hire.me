@@ -17,7 +17,7 @@ describe('shortenerErrorHandler', () => {
 
         shortenerErrorHandler(err, req, resStub, next);
 
-        expect(resStub.json).toBeCalledWith('deu ruim');
+        expect(resStub.json).toBeCalledWith({message: 'deu ruim'});
         expect(resStub.status).toBeCalledWith(400);
 
     });
