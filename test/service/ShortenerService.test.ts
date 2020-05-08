@@ -9,14 +9,24 @@ import {ShortenerRetrieveResponseInterface} from "../../src/interface/dto/Shorte
 import {FindMostVisitedRequestInterface} from "../../src/interface/dto/FindMostVisitedRequestInterface";
 import {FindMostVisitedResponseInterface} from "../../src/interface/dto/FindMostVisitedResponseInterface";
 import {ShortenedURL} from "../../src/model/ShortenedURL";
-import logger from '../../src/log/ShortenerLogger'
+import logger from '../../src/log/ShortenerLogger';
+import { TimeUtil } from '../../src/util/TimeUtil';
 
 
 jest.mock('../../src/repository/ShortenerRepository');
 jest.mock('shortid');
 jest.mock('../../src/log/ShortenerLogger');
+jest.mock('../../');
+const mockedTimeUtil = jest.mock('../../src/util/TimeUtil');
 
 describe('ShortenerService', () => {
+
+    beforeEach(() => {
+        mockedTimeUtil.resetAllMocks();
+        TimeUtil.now = jest.fn()
+            .mockImplementationOnce(() => 10)
+            .mockImplementationOnce(() => 15);
+    });
 
     describe('create', () =>{
 
@@ -53,7 +63,9 @@ describe('ShortenerService', () => {
             };
 
             const expectedResult: ShortenerCreateResponseInterface = {
-                statistics: null,
+                statistics: {
+                    time_taken: '5ms',
+                },
                 url: 'http://localhost:3000/shortener/some_alias',
                 alias: 'some_alias'
             };
@@ -123,7 +135,9 @@ describe('ShortenerService', () => {
                 const expectedResult: ShortenerCreateResponseInterface = {
                     alias: createRequest.customAlias,
                     url: 'http://localhost:3000/shortener/some_alias',
-                    statistics: null,
+                    statistics: {
+                        time_taken: '5ms',
+                    },
                 };
 
                 const shortenedURLToBeSaved = aShortenedUrl(null, createRequest.url, createRequest.customAlias,'http://localhost:3000/shortener/some_alias',0)

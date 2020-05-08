@@ -17,6 +17,7 @@ import {AlreadyExistsDataInterface} from '../interface/error/AlreadyExistsDataIn
 import {NotExistsDataInterface} from '../interface/error/NotExistsDataInterface';
 import {ShortenedURL} from "../model/ShortenedURL";
 import {ShortenerLoggerInterface} from "../interface/log/ShortenerLoggerInterface";
+import {TimeUtil} from "../util/TimeUtil";
 
 export class ShortenerService implements ShortenerServiceInterface{
 
@@ -25,7 +26,7 @@ export class ShortenerService implements ShortenerServiceInterface{
     constructor(private repository: ShortenerRepositoryInterface, private logger: ShortenerLoggerInterface) {}
 
     public create = async (createRequest: ShortenerCreateRequestInterface): Promise<ShortenerCreateResponseInterface> => {
-        const startTime = Date.now();
+        const startTime = TimeUtil.now();
 
         ShortenerValidator.validateCreateRequest(createRequest);
 
@@ -38,7 +39,7 @@ export class ShortenerService implements ShortenerServiceInterface{
             const created = await this.repository.save(new ShortenedURL(null, url, alias, this.generateShortenedurlString(alias), 0));
             this.logger.info('Saved successfuly!');
 
-            return this.convertFromShortenedURLToCreateResponse(created, startTime, Date.now());
+            return this.convertFromShortenedURLToCreateResponse(created, startTime, TimeUtil.now());
         }
 
         const shortenedURL = await this.repository.findByAlias(customAlias);
@@ -60,7 +61,7 @@ export class ShortenerService implements ShortenerServiceInterface{
         const created = await this.repository.save(new ShortenedURL(null, url, customAlias, this.generateShortenedurlString(customAlias), 0));
         this.logger.info('Saved successfuly!');
 
-        return this.convertFromShortenedURLToCreateResponse(created, startTime, Date.now());
+        return this.convertFromShortenedURLToCreateResponse(created, startTime, TimeUtil.now());
     };
 
     public retrieve = async (retrieveShortened: ShortenerRetrieveRequestInterface): Promise<ShortenerRetrieveResponseInterface> => {
