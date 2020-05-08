@@ -7,7 +7,7 @@ import {ShortenerRetrieveRequestInterface} from '../interface/dto/ShortenerRetri
 import {FindMostVisitedRequestInterface} from '../interface/dto/FindMostVisitedRequestInterface';
 import {ShortenerCreateResponseInterface} from '../interface/dto/ShortenerCreateResponseInterface';
 import {ShortenerRetrieveResponseInterface} from '../interface/dto/ShortenerRetrieveResponseInterface';
-import {ShortenedURL} from '../model/ShortenedURL';
+import {ShortenedURLEntity} from '../entity/ShortenedURLEntity';
 import {ShortenerValidator} from '../util/ShortenerValidator';
 import {FindMostVisitedResponseInterface} from '../interface/dto/FindMostVisitedResponseInterface';
 import {VisitedInterface} from '../interface/dto/VisitedInterface';
@@ -15,28 +15,37 @@ import {ShortenedNotExistsError} from '../error/ShortenedNotExistsError';
 import {ShortenedAlreadyExistsError} from '../error/ShortenedAlreadyExistsError';
 import {AlreadyExistsDataInterface} from '../interface/error/AlreadyExistsDataInterface';
 import {NotExistsDataInterface} from '../interface/error/NotExistsDataInterface';
+import {ShortenedURL} from "../model/ShortenedURL";
+import {ShortenerLoggerInterface} from "../interface/log/ShortenerLoggerInterface";
 
 export class ShortenerService implements ShortenerServiceInterface{
 
-    constructor(private repository: ShortenerRepositoryInterface) {}
+    private readonly baseaUrl: string = `http://${process.env.APP_HOST}:${process.env.APP_PORT}`;
 
-    public create = async (createRequest: ShortenerCreateRequestInterface): Promise<ShortenerCreateResponseInterface> =>  {
+    constructor(private repository: ShortenerRepositoryInterface, private logger: ShortenerLoggerInterface) {}
+
+    public create = async (createRequest: ShortenerCreateRequestInterface): Promise<ShortenerCreateResponseInterface> => {
+        const startTime = Date.now();
+
         ShortenerValidator.validateCreateRequest(createRequest);
 
         const { customAlias, url } = createRequest;
 
-        // caso custom alias não tenha sido informado, deve criar uma url encurtada com shortid.
         if (!customAlias) {
             const alias = shortid.generate();
 
-            const created = await this.repository.save(this.newShortenedUrlObject(url, alias, 0));
+            this.logger.info(`Saving ${url} in database...`);
+            const created = await this.repository.save(new ShortenedURL(null, url, alias, this.generateShortenedurlString(alias), 0));
+            this.logger.info('Saved successfuly!');
 
-            return this.convertFromShortenedURLToCreateResponse(created);
+            return this.convertFromShortenedURLToCreateResponse(created, startTime, Date.now());
         }
 
         const shortenedURL = await this.repository.findByAlias(customAlias);
 
         if (shortenedURL) {
+
+            this.logger.warn('Alias already exists in database!');
 
             const data: AlreadyExistsDataInterface = {
                 alias: customAlias,
@@ -47,9 +56,11 @@ export class ShortenerService implements ShortenerServiceInterface{
             throw new ShortenedAlreadyExistsError('Já existe url cadastrada para o shortUrl informado!', 409, data);
         }
 
-        const created = await this.repository.save(this.newShortenedUrlObject(url, customAlias, 0));
+        this.logger.info(`Saving ${url} in database...`);
+        const created = await this.repository.save(new ShortenedURL(null, url, customAlias, this.generateShortenedurlString(customAlias), 0));
+        this.logger.info('Saved successfuly!');
 
-        return this.convertFromShortenedURLToCreateResponse(created);
+        return this.convertFromShortenedURLToCreateResponse(created, startTime, Date.now());
     };
 
     public retrieve = async (retrieveShortened: ShortenerRetrieveRequestInterface): Promise<ShortenerRetrieveResponseInterface> => {
@@ -58,9 +69,12 @@ export class ShortenerService implements ShortenerServiceInterface{
 
         const { alias } = retrieveShortened;
 
+        this.logger.info(`Retreving shortened with alias ${alias}`)
         const shortenedURL = await this.repository.findByAlias(alias);
 
         if (!shortenedURL) {
+            this.logger.warn('Shortened url with informed alias not exists in database');
+
             const data: NotExistsDataInterface = {
                 err_code: '002',
                 description: 'SHORTENED URL NOT FOUND',
@@ -68,8 +82,10 @@ export class ShortenerService implements ShortenerServiceInterface{
             throw new ShortenedNotExistsError('url não encontrada!', 404, data);
         }
 
-        shortenedURL.visits += 1;
 
+        shortenedURL.increaseVisits();
+
+        this.logger.info('Updating shortened url to increase visits');
         const shortenedURLIncreased = await this.repository.update(shortenedURL);
 
         return this.convertFromShortenedURLToRetrieveResponse(shortenedURLIncreased);
@@ -81,6 +97,7 @@ export class ShortenerService implements ShortenerServiceInterface{
 
         const { quantity } = findModeVisitedRequest;
 
+        this.logger.info('Retrieving most visiteds from database.');
         const shortenedURLs = await this.repository.findMostVisiteds(quantity)
 
         return {
@@ -88,38 +105,35 @@ export class ShortenerService implements ShortenerServiceInterface{
         } ;
     }
 
-    private newShortenedUrlObject = (url: string, alias: string, visits: number): ShortenedURL => {
-        let shortenedURL: ShortenedURL = new ShortenedURL();
-        shortenedURL.url = url;
-        shortenedURL.alias = alias;
-        shortenedURL.visits = visits;
-
-        return shortenedURL
-    }
-
-    private convertFromShortenedURLToCreateResponse = (created: ShortenedURL): ShortenerCreateResponseInterface => {
+    private convertFromShortenedURLToCreateResponse = (created: ShortenedURL, startTime, finalTime): ShortenerCreateResponseInterface => {
         return {
-            alias: created.alias,
-            url: created.url,
-            statistics: null,
+            alias: created.getAlias(),
+            url: created.getShortenedurl(),
+            statistics: {
+                time_taken: `${finalTime - startTime}ms`
+            },
         }
     }
 
     private convertFromShortenedURLToRetrieveResponse = (shortenedURL: ShortenedURL): ShortenerRetrieveResponseInterface => {
         return {
-            url: shortenedURL.url,
-            alias: shortenedURL.alias,
+            url: shortenedURL.getUrl(),
+            alias: shortenedURL.getAlias(),
         };
     }
 
     private convertFromShortenedURLToFindMostVisitedsResponse = (shortenedURLs: ShortenedURL[]): VisitedInterface[] => {
         return shortenedURLs.map((shortened): VisitedInterface => {
             return {
-                url: shortened.url,
-                alias: shortened.alias,
-                visits: shortened.visits,
+                url: shortened.getUrl(),
+                alias: shortened.getAlias(),
+                visits: shortened.getVisits(),
             }
         });
+    }
+
+    private generateShortenedurlString = (customAlias: string): string => {
+        return this.baseaUrl.concat(`/shortener/${customAlias}`);
     }
 
 }

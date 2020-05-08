@@ -1,13 +1,13 @@
 import {Request, Response} from 'express';
 import {ShortenerControllerError} from "../error/ShortenerControllerError";
 import {ShortenerServiceInterface} from "../interface/service/ShortenerServiceInterface";
+import logger from '../log/ShortenerLogger';
 
 export class ShortenerController {
 
     constructor(private shortenerService: ShortenerServiceInterface) {}
 
     public create = async (req: Request, res: Response) => {
-
         const { url, CUSTOM_ALIAS } = req.query;
 
         if (typeof url !== 'string') {
@@ -42,7 +42,7 @@ export class ShortenerController {
         if (!quantity) throw new ShortenerControllerError('quantity must be informed', 400)
 
         const mostVisiteds = await this.shortenerService.findMostVisiteds({
-            quantity: Number(quantity),
+            quantity: parseInt(quantity),
         });
 
         return res.status(200).json(mostVisiteds);

@@ -4,11 +4,13 @@ import {EnvironmentConfigurer} from "../../src/config/EnvironmentConfigurer";
 jest.mock('dotenv');
 
 const envVariables = new Map();
-envVariables.set('SERVER_PORT', 3000);
+envVariables.set('APP_PORT', 3000);
+envVariables.set('APP_HOST', 'localhost');
 envVariables.set('DB_HOST', 'DB_HOST');
 envVariables.set('DB_PORT', 3306);
 envVariables.set('DB_USERNAME', 'DB_USERNAME');
 envVariables.set('DB_PASSWORD', 'DB_PASSWORD');
+envVariables.set('LOG_LEVEL', 'info')
 
 describe('EnvironmentConfigurer', () => {
 

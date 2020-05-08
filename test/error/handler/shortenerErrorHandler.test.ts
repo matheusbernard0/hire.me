@@ -1,8 +1,10 @@
 import shortenerErrorHandler from '../../../src/error/handler/shortenerErrorHandler';
-import {ShortenerControllerError} from "../../../src/error/ShortenerControllerError";
-import {ShortenedNotExistsError} from "../../../src/error/ShortenedNotExistsError";
-import {ShortenedAlreadyExistsError} from "../../../src/error/ShortenedAlreadyExistsError";
-import {Response} from "jest-express/lib/response";
+import { ShortenerControllerError } from "../../../src/error/ShortenerControllerError";
+import { ShortenedNotExistsError } from "../../../src/error/ShortenedNotExistsError";
+import { ShortenedAlreadyExistsError } from "../../../src/error/ShortenedAlreadyExistsError";
+import { Response } from "jest-express/lib/response";
+
+jest.mock('../../../src/log/ShortenerLogger');
 
 describe('shortenerErrorHandler', () => {
 

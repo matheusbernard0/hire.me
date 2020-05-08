@@ -1,51 +1,42 @@
-import express, {Application, Router} from 'express';
-import {ShortenerController} from './controller/ShortenerController';
-import asyncHandler from 'express-async-handler';
-import {createConnection} from "typeorm";
-import {ShortenerService} from "./service/ShortenerService";
-import {ShortenerRepository} from "./repository/ShortenerRepository";
-import shortenerErrorHandler from "./error/handler/shortenerErrorHandler";
+import express, {Application} from 'express';
+import {createConnection} from 'typeorm';
+import shortenerErrorHandler from './error/handler/shortenerErrorHandler';
+import {RouterBuilder} from './router/ShortenerRouterBuilder';
+import logger from './log/ShortenerLogger';
 
 class ApplicationBuilder {
 
     private static setRouters(app: Application): void {
-
-        const shortenerController = ApplicationBuilder.createController();
-
-        const shortenerRouter: Router = Router();
-
-        shortenerRouter.put('/create', asyncHandler(shortenerController.create));
-        shortenerRouter.get('/retrieve/:alias', asyncHandler(shortenerController.retrieve));
-        shortenerRouter.get('/mostVisiteds/:quantity', asyncHandler(shortenerController.mostVisiteds));
-
-        app.use('/shortener', shortenerRouter);
+        logger.info('Setting routers ...');
+        app.use('/shortener', RouterBuilder.build());
     }
 
     private static setErrorHandler(app: Application): void {
+        logger.info('Setting error handler ...');
         app.use(shortenerErrorHandler)
     };
 
     private static async createDatabaseConnection(): Promise<void> {
+        logger.info('Creating database connection ...');
         await createConnection();
         return;
     }
 
-    private static createController(): ShortenerController {
-        return new ShortenerController(new ShortenerService(new ShortenerRepository()));
-    }
-
     public static async build(): Promise<Application> {
-
-        // cria conexão com o banco de dados
         await ApplicationBuilder.createDatabaseConnection();
 
-        //cria e configura o express
-        const application: Application = express();
-        application.use(express.json());
+        const application = ApplicationBuilder.createApplicationInstance();
 
         ApplicationBuilder.setRouters(application);
         ApplicationBuilder.setErrorHandler(application);
 
+        return application;
+    }
+
+    private static createApplicationInstance(): Application {
+        logger.info('Creating express instance...');
+        const application: Application = express();
+        application.use(express.json());
         return application;
     }
 }

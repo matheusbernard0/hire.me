@@ -1,4 +1,4 @@
-import {Column, MigrationInterface, PrimaryGeneratedColumn, QueryRunner, Table} from "typeorm";
+import {MigrationInterface, QueryRunner, Table} from "typeorm";
 
 export class ShortenedURLCreation1588255723298 implements MigrationInterface {
 
@@ -24,6 +24,11 @@ export class ShortenedURLCreation1588255723298 implements MigrationInterface {
                     type: 'varchar',
                     isNullable: false,
                     isUnique: true,
+                },
+                {
+                    name: 'shortenedurl',
+                    type: 'varchar',
+                    isNullable: false
                 },
                 {
                     name: 'visits',

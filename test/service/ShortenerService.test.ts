@@ -2,25 +2,26 @@ import {ShortenerService} from '../../src/service/ShortenerService';
 import {ShortenerRepository} from '../../src/repository/ShortenerRepository';
 import {ShortenerCreateRequestInterface} from '../../src/interface/dto/ShortenerCreateRequestInterface';
 import shortid from 'shortid';
-import {ShortenedURL} from "../../src/model/ShortenedURL";
 import {ShortenerCreateResponseInterface} from "../../src/interface/dto/ShortenerCreateResponseInterface";
 import {ShortenedAlreadyExistsError} from "../../src/error/ShortenedAlreadyExistsError";
 import {ShortenerRetrieveRequestInterface} from "../../src/interface/dto/ShortenerRetrieveRequestInterface";
 import {ShortenerRetrieveResponseInterface} from "../../src/interface/dto/ShortenerRetrieveResponseInterface";
 import {FindMostVisitedRequestInterface} from "../../src/interface/dto/FindMostVisitedRequestInterface";
 import {FindMostVisitedResponseInterface} from "../../src/interface/dto/FindMostVisitedResponseInterface";
-import mock = jest.mock;
+import {ShortenedURL} from "../../src/model/ShortenedURL";
+import logger from '../../src/log/ShortenerLogger'
 
 
 jest.mock('../../src/repository/ShortenerRepository');
 jest.mock('shortid');
+jest.mock('../../src/log/ShortenerLogger');
 
 describe('ShortenerService', () => {
 
     describe('create', () =>{
 
         it('caso createRequest seja falsy, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const createRequest = null;
 
@@ -28,7 +29,7 @@ describe('ShortenerService', () => {
         });
 
         it('caso createRequest não seja um objeto, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const createRequest = [] as unknown as ShortenerCreateRequestInterface;
 
@@ -36,7 +37,7 @@ describe('ShortenerService', () => {
         });
 
         it('caso createRequest não possua o atributo url do tipo string, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const createRequest = {} as unknown as ShortenerCreateRequestInterface;
 
@@ -44,17 +45,20 @@ describe('ShortenerService', () => {
         });
 
         it('caso CUSTOM_ALIAS não tenha sido informado, deve criar uma url encurtada usando o shortid', async () => {
+            process.env.APP_PORT = '3000';
+            process.env.APP_HOST = 'localhost';
+
             const createRequest: ShortenerCreateRequestInterface = {
                 url: 'some_url'
             };
 
             const expectedResult: ShortenerCreateResponseInterface = {
                 statistics: null,
-                url: 'some_url',
+                url: 'http://localhost:3000/shortener/some_alias',
                 alias: 'some_alias'
             };
 
-            const shortenedURLToBeSaved = aShortenedUrl(createRequest.url, 'some_alias', 0);
+            const shortenedURLToBeSaved = aShortenedUrl(null, createRequest.url, 'some_alias', 'http://localhost:3000/shortener/some_alias', 0);
 
             shortid.generate = jest.fn(() => {
                 return 'some_alias';
@@ -62,13 +66,10 @@ describe('ShortenerService', () => {
 
             const mockedRepository = new ShortenerRepository();
             mockedRepository.save = jest.fn(async (shortenedURL): Promise<ShortenedURL> => {
-                return {
-                    ...shortenedURL,
-                    id: 1,
-                }
+                return new ShortenedURL(1, shortenedURL.getUrl(), shortenedURL.getAlias(), shortenedURL.getShortenedurl(), shortenedURL.getVisits());
             });
 
-            const shortenerService = new ShortenerService(mockedRepository);
+            const shortenerService = new ShortenerService(mockedRepository, logger);
 
             await expect(shortenerService.create(createRequest)).resolves.toStrictEqual(expectedResult);
             expect(shortid.generate).toBeCalled();
@@ -95,19 +96,14 @@ describe('ShortenerService', () => {
 
                 const mockedRepository = new ShortenerRepository();
                 mockedRepository.save = jest.fn(async (shortenedURL): Promise<ShortenedURL> => {
-                    return {
-                        ...shortenedURL,
-                        id: 1,
-                    }
+                    return new ShortenedURL(1, shortenedURL.getUrl(), shortenedURL.getAlias(), shortenedURL.getShortenedurl(), shortenedURL.getVisits());
                 });
 
                 mockedRepository.findByAlias = jest.fn(async (alias: string): Promise<ShortenedURL> => {
-                    const shortenedURL = new ShortenedURL();
-                    shortenedURL.alias = alias;
-                    return shortenedURL;
+                    return new ShortenedURL(1, 'url', 'alias', 'shortenedurl',10);
                 });
 
-                const shortenerService = new ShortenerService(mockedRepository);
+                const shortenerService = new ShortenerService(mockedRepository, logger);
 
                 await expect(shortenerService.create(createRequest)).rejects.toThrowError('Já existe url cadastrada para o shortUrl informado!');
                 expect(shortid.generate).not.toBeCalled();
@@ -116,6 +112,9 @@ describe('ShortenerService', () => {
             });
 
             it('se não existe, deve salvar url com custom_alias', async () => {
+                process.env.APP_PORT = '3000';
+                process.env.APP_HOST = 'localhost';
+
                 const createRequest: ShortenerCreateRequestInterface = {
                     url: 'some_url',
                     customAlias: 'some_alias',
@@ -123,11 +122,11 @@ describe('ShortenerService', () => {
 
                 const expectedResult: ShortenerCreateResponseInterface = {
                     alias: createRequest.customAlias,
-                    url: createRequest.url,
+                    url: 'http://localhost:3000/shortener/some_alias',
                     statistics: null,
                 };
 
-                const shortenedURLToBeSaved = aShortenedUrl(createRequest.url, createRequest.customAlias,0)
+                const shortenedURLToBeSaved = aShortenedUrl(null, createRequest.url, createRequest.customAlias,'http://localhost:3000/shortener/some_alias',0)
 
                 shortid.generate = jest.fn(() => {
                     return 'some_alias';
@@ -135,17 +134,14 @@ describe('ShortenerService', () => {
 
                 const mockedRepository = new ShortenerRepository();
                 mockedRepository.save = jest.fn(async (shortenedURL): Promise<ShortenedURL> => {
-                    return {
-                        ...shortenedURL,
-                        id: 1,
-                    }
+                    return new ShortenedURL(1, shortenedURL.getUrl(), shortenedURL.getAlias(), shortenedURL.getShortenedurl(), shortenedURL.getVisits());
                 });
 
                 mockedRepository.findByAlias = jest.fn(async (alias: string): Promise<ShortenedURL> => {
                     return null;
                 });
 
-                const shortenerService = new ShortenerService(mockedRepository);
+                const shortenerService = new ShortenerService(mockedRepository, logger);
 
                 await expect(shortenerService.create(createRequest)).resolves.toStrictEqual(expectedResult);
                 expect(shortid.generate).not.toBeCalled();
@@ -159,7 +155,7 @@ describe('ShortenerService', () => {
     describe('retrieve', () =>{
 
         it('caso retrieveRequest seja falsy, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const retrieveRequest = null;
 
@@ -167,7 +163,7 @@ describe('ShortenerService', () => {
         });
 
         it('caso retrieveRequest não seja um objeto, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const retrieveRequest = [] as unknown as ShortenerRetrieveRequestInterface;
 
@@ -175,7 +171,7 @@ describe('ShortenerService', () => {
         });
 
         it('caso retrieveRequest não possua o atributo alias do tipo string, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const retrieveRequest = {} as unknown as ShortenerRetrieveRequestInterface;
 
@@ -192,7 +188,7 @@ describe('ShortenerService', () => {
                 return null;
             });
 
-            const shortenerService = new ShortenerService(mockedRepository);
+            const shortenerService = new ShortenerService(mockedRepository, logger);
 
             await expect(shortenerService.retrieve(retrieveRequest)).rejects.toThrowError('url não encontrada!');
             expect(mockedRepository.findByAlias).toBeCalledWith(retrieveRequest.alias);
@@ -208,31 +204,30 @@ describe('ShortenerService', () => {
                 url: 'some_url',
             }
 
-            const shortenedURL = aShortenedUrl('some_url', retrieveRequest.alias, 0);
+            const shortenedURL = aShortenedUrl(null, 'some_url', retrieveRequest.alias, 'some_shortenedurl', 0);
 
             const mockedRepository = new ShortenerRepository();
             mockedRepository.findByAlias = jest.fn(async (alias: string): Promise<ShortenedURL> => {
-                return {
-                    ...shortenedURL,
-                }
+                return shortenedURL
             });
             mockedRepository.update = jest.fn(async (shortenedUrl: ShortenedURL): Promise<ShortenedURL> => {
                 return shortenedUrl;
             });
 
-            const shortenerService = new ShortenerService(mockedRepository);
+            const shortenerService = new ShortenerService(mockedRepository, logger);
 
             await expect(shortenerService.retrieve(retrieveRequest)).resolves.toStrictEqual(expectedResult);
             expect(mockedRepository.findByAlias).toBeCalledWith(retrieveRequest.alias);
 
-            shortenedURL.visits += 1;
+            shortenedURL.increaseVisits();
+
             expect(mockedRepository.update).toBeCalledWith(shortenedURL);
         });
     });
 
     describe('findMostVisiteds', () =>{
         it('caso findMostVisitedsRequest seja falsy, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const findMostVisitedRequest = null;
 
@@ -240,7 +235,7 @@ describe('ShortenerService', () => {
         });
 
         it('caso findMostVisitedRequest não seja um objeto, deve lançar exceção', async function () {
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const findMostVisitedRequest = [] as unknown as FindMostVisitedRequestInterface;
 
@@ -250,7 +245,7 @@ describe('ShortenerService', () => {
         it('caso findMostVisitedRequest não possua o atributo quantity do tipo number, deve lançar exceção', async function () {
             const findMostVisitedRequestInterface = {} as unknown as FindMostVisitedRequestInterface;
 
-            const shortenerService = new ShortenerService(new ShortenerRepository());
+            const shortenerService = new ShortenerService(new ShortenerRepository(), logger);
 
             const findMostVisitedRequest = {} as unknown as FindMostVisitedRequestInterface;
 
@@ -264,9 +259,9 @@ describe('ShortenerService', () => {
             }
 
             const aShortenedUrlArray = [
-                aShortenedUrl('url1', 'alias1', 7),
-                aShortenedUrl('url2', 'alias2', 6),
-                aShortenedUrl('url3', 'alias3', 8),
+                aShortenedUrl(1, 'url1', 'alias1', 'shortenedurl_1', 7),
+                aShortenedUrl(2, 'url2', 'alias2', 'shortenedurl_2', 6),
+                aShortenedUrl(3, 'url3', 'alias3', 'shortenedurl_3', 8),
             ];
 
             const expectedResult: FindMostVisitedResponseInterface = {
@@ -282,7 +277,7 @@ describe('ShortenerService', () => {
                 return aShortenedUrlArray;
             });
 
-            const shortenerService = new ShortenerService(mockedRepository);
+            const shortenerService = new ShortenerService(mockedRepository, logger);
 
             await expect(shortenerService.findMostVisiteds(findMostVisitedRequest)).resolves.toStrictEqual(expectedResult);
             expect(mockedRepository.findMostVisiteds).toBeCalledWith(findMostVisitedRequest.quantity);
@@ -290,10 +285,6 @@ describe('ShortenerService', () => {
     });
 });
 
-function aShortenedUrl(url, alias, visits) {
-    const shortenedURLToBeSaved = new ShortenedURL();
-    shortenedURLToBeSaved.alias = alias;
-    shortenedURLToBeSaved.url = url;
-    shortenedURLToBeSaved.visits = visits;
-    return shortenedURLToBeSaved;
+function aShortenedUrl(id, url, alias, shortenedurl, visits): ShortenedURL {
+    return new ShortenedURL(id, url, alias, shortenedurl, visits);
 }

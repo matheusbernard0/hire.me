@@ -1,9 +1,10 @@
 import {ShortenerControllerError} from "../ShortenerControllerError";
 import {ShortenedNotExistsError} from "../ShortenedNotExistsError";
 import {ShortenedAlreadyExistsError} from "../ShortenedAlreadyExistsError";
+import logger from '../../log/ShortenerLogger';
 
 export default function(err, req, res, next) {
-    console.error(err.stack);
+    logger.error(err.stack);
 
     if(err instanceof ShortenerControllerError){
         return res.status(err.status)
