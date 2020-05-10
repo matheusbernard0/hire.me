@@ -36,7 +36,7 @@ $ docker-compose down
 
 ### Create URL:
 ```
-POST http://localhost:3000/shortener?url=<string>&CUSTOM_ALIAS=<string>
+PUT http://localhost:3000/shortener?url=<string>&CUSTOM_ALIAS=<string>
 ```
 
 ---
