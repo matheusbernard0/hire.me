@@ -26,6 +26,89 @@ describe('ShortenerController', () => {
                 await expect(shortenerController.create(mockedRequest, mockedResponse)).rejects.toThrowError('url must be informed');
         });
 
+        it('caso a url não seja http e nem https, deve jogar uma exceção', async () => {
+            const shortenerController = new ShortenerController(new ShortenerService(new ShortenerRepository(), logger));
+
+            const mockedRequest = new Request() as unknown as ExpressRequest;
+            const mockedResponse = new Response() as unknown as ExpressResponse;
+
+            mockedRequest.query.url = 'url'
+
+            await expect(shortenerController.create(mockedRequest, mockedResponse)).rejects.toThrowError('a url informada deve seguir o padrão do protocolo http/https');
+        })
+
+        it('caso a requisição contenha url e seja http, deve retornar ' +
+            'o resultado de shortenerService.create e com status 201', async () => {
+            // mocks
+            const mockedRepository =  new ShortenerRepository();
+            const mockedService = new ShortenerService(mockedRepository, logger);
+            const mockedRequest = new Request() as unknown as ExpressRequest;
+            const mockedResponse = new Response() as unknown as ExpressResponse;
+
+            // expectedValues
+            const shortenerServiceCreateResult = {
+                alias: 'alias',
+                url: 'url',
+                statistics: null,
+            };
+
+            mockedRequest.query.CUSTOM_ALIAS = 'alias';
+            mockedRequest.query.url = 'http://url';
+
+            const expectedShortenerServiceCreateInput = {
+                url: 'http://url',
+                customAlias: 'alias',
+            };
+
+            mockedService.create = jest.fn(async () => {
+                return shortenerServiceCreateResult;
+            });
+
+            const shortenerController = new ShortenerController(mockedService);
+
+            // execution
+            await expect(shortenerController.create(mockedRequest, mockedResponse)).resolves;
+            expect(mockedService.create).toBeCalledWith(expectedShortenerServiceCreateInput);
+            expect(mockedResponse.status).toBeCalledWith(201);
+            expect(mockedResponse.json).toBeCalledWith(shortenerServiceCreateResult);
+        });
+
+        it('caso a requisição contenha url e seja https, deve retornar ' +
+            'o resultado de shortenerService.create e com status 201', async () => {
+            // mocks
+            const mockedRepository =  new ShortenerRepository();
+            const mockedService = new ShortenerService(mockedRepository, logger);
+            const mockedRequest = new Request() as unknown as ExpressRequest;
+            const mockedResponse = new Response() as unknown as ExpressResponse;
+
+            // expectedValues
+            const shortenerServiceCreateResult = {
+                alias: 'alias',
+                url: 'url',
+                statistics: null,
+            };
+
+            mockedRequest.query.CUSTOM_ALIAS = 'alias';
+            mockedRequest.query.url = 'https://url';
+
+            const expectedShortenerServiceCreateInput = {
+                url: 'https://url',
+                customAlias: 'alias',
+            };
+
+            mockedService.create = jest.fn(async () => {
+                return shortenerServiceCreateResult;
+            });
+
+            const shortenerController = new ShortenerController(mockedService);
+
+            // execution
+            await expect(shortenerController.create(mockedRequest, mockedResponse)).resolves;
+            expect(mockedService.create).toBeCalledWith(expectedShortenerServiceCreateInput);
+            expect(mockedResponse.status).toBeCalledWith(201);
+            expect(mockedResponse.json).toBeCalledWith(shortenerServiceCreateResult);
+        });
+
         it('caso a requisição contenha url e customAlias setados, deve retornar ' +
             'o resultado de shortenerService.create e com status 201', async () => {
             // mocks
@@ -42,10 +125,10 @@ describe('ShortenerController', () => {
             };
 
             mockedRequest.query.CUSTOM_ALIAS = 'alias';
-            mockedRequest.query.url = 'url';
+            mockedRequest.query.url = 'http://url';
 
             const expectedShortenerServiceCreateInput = {
-                url: 'url',
+                url: 'http://url',
                 customAlias: 'alias',
             };
 
@@ -73,12 +156,12 @@ describe('ShortenerController', () => {
             // expectedValues
             const expectedShortenerServiceCreateResult = {
                 alias: 'alias',
-                url: 'url',
+                url: 'http://url',
                 statistics: null,
             };
 
             const expectedShortenerServiceCreateInput = {
-                url: 'url',
+                url: 'http://url',
                 customAlias: null,
             };
 
@@ -89,7 +172,7 @@ describe('ShortenerController', () => {
             const shortenerController = new ShortenerController(mockedService);
 
             mockedRequest.query.CUSTOM_ALIAS = undefined;
-            mockedRequest.query.url = 'url';
+            mockedRequest.query.url = 'http://url';
 
             // execution
             await expect(shortenerController.create(mockedRequest, mockedResponse)).resolves;
@@ -110,7 +193,7 @@ describe('ShortenerController', () => {
             await expect(shortenerController.retrieve(mockedRequest, mockedResponse)).rejects.toThrowError('alias must be informed');
         });
 
-        it('caso alias tenha sido informado, deve retornar o resultado de shortenerService.retrieve', async () => {
+        it('caso alias tenha sido informado, deve redirecionar para a url original', async () => {
             // mocks
             const mockedRepository =  new ShortenerRepository();
             const mockedService = new ShortenerService(mockedRepository, logger);
@@ -136,8 +219,7 @@ describe('ShortenerController', () => {
 
             await expect(shortenerController.retrieve(mockedRequest, mockedResponse)).resolves;
             expect(mockedService.retrieve).toBeCalledWith(expectShortenerServiceInput);
-            expect(mockedResponse.status).toBeCalledWith(200);
-            expect(mockedResponse.json).toBeCalledWith(expectShortenerServiceResult);
+            expect(mockedResponse.redirect).toBeCalledWith(expectShortenerServiceResult.url);
         });
     });
 

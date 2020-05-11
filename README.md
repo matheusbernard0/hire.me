@@ -36,7 +36,11 @@ $ docker-compose down
 
 ### Create URL:
 ```
-POST http://localhost:3000/shortener?url=<string>&CUSTOM_ALIAS=<string>
+PUT http://localhost:3000/shortener?url=<string>&CUSTOM_ALIAS=<string>
+```
+##### Example:
+```
+PUT http://localhost:3000/shortener?url=http://something.com&CUSTOM_ALIAS=xpto
 ```
 
 ---
@@ -44,9 +48,17 @@ POST http://localhost:3000/shortener?url=<string>&CUSTOM_ALIAS=<string>
 ```
 GET http://localhost:3000/shortener/{alias}
 ```
+##### Example:
+```
+GET http://localhost:3000/shortener/xpto
+```
 
 ---
 ### FindMostVisiteds
 ```
 GET http://localhost:3000/shortener/mostVisiteds/{quantity}
+```
+##### Example:
+```
+GET http://localhost:3000/shortener/mostVisiteds/10
 ```

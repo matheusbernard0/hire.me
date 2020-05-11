@@ -51,7 +51,7 @@ export class ShortenerController {
 
     private validateUrl = (url: string): void => {
         if(!url.startsWith('http://') && !url.startsWith('https://')) {
-            throw new ShortenerControllerError('createRequest.url deve ser uma url válida', 400);
+            throw new ShortenerControllerError('a url informada deve seguir o padrão do protocolo http/https', 400);
         }
     }
 }
