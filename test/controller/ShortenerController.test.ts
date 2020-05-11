@@ -34,7 +34,7 @@ describe('ShortenerController', () => {
 
             mockedRequest.query.url = 'url'
 
-            await expect(shortenerController.create(mockedRequest, mockedResponse)).rejects.toThrowError('a url informada deve seguir o padrão do protocolo http/https');
+            await expect(shortenerController.create(mockedRequest, mockedResponse)).rejects.toThrowError('the informed url must follow the http/https protocol');
         })
 
         it('caso a requisição contenha url e seja http, deve retornar ' +
