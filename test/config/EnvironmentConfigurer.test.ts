@@ -34,9 +34,25 @@ describe('EnvironmentConfigurer', () => {
 
     });
 
+    it('caso NODE_ENV seja diferente de \'production\', deve carregar as informação do .env', () => {
+
+        process.env.NODE_ENV = 'production';
+
+
+        dotenv.config = jest.fn();
+
+
+        EnvironmentConfigurer.configure();
+
+        expect(dotenv.config).toBeCalledTimes(0);
+
+    });
+
     describe('deve validar se todas as variáveis de ambiente estão setadas',  () => {
 
         envVariables.forEach( (value, key) => {
+
+            process.env.NODE_ENV = 'dev';
 
             it(`caso ${key} não tenha sido setado, deve jogar uma exceção`, () => {
                 delete process.env[key];

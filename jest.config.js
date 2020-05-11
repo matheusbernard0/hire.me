@@ -1,6 +1,14 @@
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  verbose: true,
-  rootDir: './test',
+  roots: ['<rootDir>/test'],
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
+  },
+  testRegex: '(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$',
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  // collectCoverage: true,
+  // collectCoverageFrom: [
+  //   "src/**/*.{ts}",
+  //   "!**/node_modules/**",
+  //   "!**/vendor/**"
+  // ]
 };

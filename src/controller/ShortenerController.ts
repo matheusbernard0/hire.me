@@ -13,6 +13,8 @@ export class ShortenerController {
             throw new ShortenerControllerError('url must be informed', 400);
         }
 
+        this.validateUrl(url);
+
         const shortenedUrl = await this.shortenerService.create({
             url: url,
             customAlias: CUSTOM_ALIAS ? String(CUSTOM_ALIAS): null,
@@ -31,7 +33,7 @@ export class ShortenerController {
             alias: alias,
         });
 
-        return res.status(200).json(shortenedURL);
+        return res.redirect(shortenedURL.url);
     }
 
     public mostVisiteds = async (req: Request, res: Response) => {
@@ -45,5 +47,11 @@ export class ShortenerController {
         });
 
         return res.status(200).json(mostVisiteds);
+    }
+
+    private validateUrl = (url: string): void => {
+        if(!url.startsWith('http://') && !url.startsWith('https://')) {
+            throw new ShortenerControllerError('createRequest.url deve ser uma url válida', 400);
+        }
     }
 }

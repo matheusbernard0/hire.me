@@ -1,5 +1,3 @@
-import shortenerErrorHandler from "../error/handler/shortenerErrorHandler";
-
 export class ShortenedURL {
     private id?: number;
     private url: string;
@@ -42,7 +40,7 @@ export class ShortenedURL {
     }
 
     private validateParameters(id: number, url: string, alias: string, shortenedurl: string,  visits: number): void {
-        if (id && typeof id !== 'number') throw new Error('url must be a number');
+        if (id && typeof id !== 'number') throw new Error('id must be a number');
 
         if (typeof url !== 'string') throw new Error('url must be a string');
 
