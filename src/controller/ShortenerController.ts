@@ -41,6 +41,7 @@ export class ShortenerController {
         const {quantity} = req.params;
 
         if (!quantity) throw new ShortenerControllerError('quantity must be informed', 400)
+        if ( isNaN(Number(quantity))) throw new ShortenerControllerError('quantity must be a number', 400)
 
         const mostVisiteds = await this.shortenerService.findMostVisiteds({
             quantity: parseInt(quantity),

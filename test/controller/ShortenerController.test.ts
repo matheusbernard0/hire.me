@@ -224,7 +224,7 @@ describe('ShortenerController', () => {
     });
 
     describe('findMostVisiteds', () => {
-        it('caso quantity não tenha sido setado corretamente, deve lançar uma exceção', async () => {
+        it('caso quantity não tenha sido setado, deve lançar uma exceção', async () => {
             // mocks
             const mockedRepository =  new ShortenerRepository();
             const mockedService = new ShortenerService(mockedRepository, logger);
@@ -236,6 +236,20 @@ describe('ShortenerController', () => {
             mockedRequest.params.quantity = null;
 
             await expect(shortenerController.mostVisiteds(mockedRequest, mockedResponse)).rejects.toThrowError('quantity must be informed');
+        });
+
+        it('caso quantity não seja numérico, deve lançar uma exceção', async () => {
+            // mocks
+            const mockedRepository =  new ShortenerRepository();
+            const mockedService = new ShortenerService(mockedRepository, logger);
+            const mockedRequest = new Request() as unknown as ExpressRequest;
+            const mockedResponse = new Response() as unknown as ExpressResponse;
+
+            const shortenerController = new ShortenerController(mockedService);
+
+            mockedRequest.params.quantity = "12something";
+
+            await expect(shortenerController.mostVisiteds(mockedRequest, mockedResponse)).rejects.toThrowError('quantity must be a number');
         });
 
         it('caso quantity tenha sido setado corretamente, deve retornar ' +
